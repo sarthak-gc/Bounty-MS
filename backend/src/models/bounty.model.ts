@@ -1,28 +1,32 @@
 import mongoose from "mongoose";
 
-enum Status {
+export enum BountyStatus {
   Open = "Open",
-  InProgress = "InProgress",
   Paused = "Paused",
-  Submitted = "Submitted",
   Paid = "Paid",
   Expired = "Expired",
 }
 
 interface bountyI {
+  question: string;
   teacherId: mongoose.Types.ObjectId;
-  status: Status;
+  status: BountyStatus;
   studentId: mongoose.Types.ObjectId;
   price: number;
   submissions: [mongoose.Types.ObjectId];
 }
 
 const bountySchema = new mongoose.Schema<bountyI>({
+  question: String,
   teacherId: mongoose.Schema.Types.ObjectId,
-  status: { type: String, enum: Object.values(Status) },
+  status: { type: String, enum: Object.values(BountyStatus) },
   studentId: { type: mongoose.Schema.Types.ObjectId, default: null },
   price: Number,
-  submissions: { type: [mongoose.Schema.Types.ObjectId], default: [] },
+  submissions: {
+    type: [mongoose.Schema.Types.ObjectId],
+    default: [],
+    ref: "submission",
+  },
 });
 
-export const bountyModel = mongoose.model("bounty", bountySchema);
+export const bountyModel = mongoose.model<bountyI>("bounty", bountySchema);

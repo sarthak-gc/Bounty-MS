@@ -13,4 +13,4 @@ const answerSchema = new mongoose.Schema<answerI>(
   { timestamps: true }
 );
 
-export const answerModel = mongoose.model("answer", answerSchema);
+export const answerModel = mongoose.model<answerI>("answer", answerSchema);

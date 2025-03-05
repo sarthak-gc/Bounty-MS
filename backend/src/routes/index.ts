@@ -1,12 +1,14 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import dotenv from "dotenv";
+import teacherRoutes from "./teacher.routes";
+import studentRoutes from "./students.routes";
+import adminRoutes from "./admin.routes";
 dotenv.config();
 
 const routers = express.Router();
 
-routers.get("/teacher", (req: Request, res: Response) => {});
-routers.get("/admin", (req: Request, res: Response) => {});
-routers.get("/student", (req: Request, res: Response) => {});
-console.log("here");
+routers.use("/teacher", teacherRoutes);
+routers.use("/admin", adminRoutes);
+routers.use("/student", studentRoutes);
 
 export default routers;

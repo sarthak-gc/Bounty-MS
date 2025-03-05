@@ -10,4 +10,4 @@ const balanceSchema = new mongoose.Schema<balanceI>({
   balance: Number,
 });
 
-export const balanceModel = mongoose.model("balance", balanceSchema);
+export const balanceModel = mongoose.model<balanceI>("balance", balanceSchema);

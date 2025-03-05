@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 
 interface studentI {
@@ -8,13 +7,17 @@ interface studentI {
   password: string;
   //maybe add no of solved bounties, but can be derived from bounties
   // noOfBounties: number
+  role: string;
+  isAccepted: boolean;
 }
 
 const studentSchema = new mongoose.Schema<studentI>({
-  name: String,
-  email: String,
-  username: String,
-  password: String,
+  name: { type: String },
+  email: { type: String },
+  username: { type: String },
+  password: { type: String },
+  role: { type: String, default: "student" },
+  isAccepted: { type: Boolean, default: false },
 });
 
-export const studentModel = mongoose.model("student", studentSchema);
+export const studentModel = mongoose.model<studentI>("student", studentSchema);

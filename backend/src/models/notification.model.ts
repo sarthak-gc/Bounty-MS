@@ -13,7 +13,7 @@ const notificationSchema = new mongoose.Schema<notificationI>(
   { timestamps: true }
 );
 
-export const notificationModel = mongoose.model(
+export const notificationModel = mongoose.model<notificationI>(
   "notification",
   notificationSchema
 );

@@ -5,6 +5,7 @@ interface teacherI {
   email: string;
   username: string;
   password: string;
+  role: string;
 }
 
 const teacherSchema = new mongoose.Schema<teacherI>({
@@ -12,6 +13,7 @@ const teacherSchema = new mongoose.Schema<teacherI>({
   email: String,
   username: String,
   password: String,
+  role: { type: String, default: "teacher" },
 });
 
-export const teacherModel = mongoose.model("teacher", teacherSchema);
+export const teacherModel = mongoose.model<teacherI>("teacher", teacherSchema);
