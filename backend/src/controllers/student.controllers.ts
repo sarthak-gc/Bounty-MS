@@ -11,9 +11,18 @@ import {
 } from "../models/submissions.model";
 import { balanceModel } from "../models/balance.model";
 import { studentModel } from "../models/student.model";
+import {
+  RegistrationStatus,
+  RegistrationStudentModel,
+} from "../models/registration.model";
+import { validateBounty, validateDetails } from "../utils/student.utils";
 
 const allBounties = async (req: Request, res: Response) => {
-  const bounties = await bountyModel.find({});
+  const bounties = await bountyModel.find({
+    status: {
+      $in: [BountyStatus.Open, BountyStatus.Paused],
+    },
+  });
   if (bounties.length > 0) {
     res.json({
       status: "success",
@@ -34,7 +43,8 @@ const allBounties = async (req: Request, res: Response) => {
 };
 
 const submitBounty = async (req: Request, res: Response) => {
-  const userId = req.user.id;
+  // const userId = req.user.id;
+  const userId = "67cb4187f5d0d9e6fab7589e";
   const { bountyId } = req.params;
 
   //since multer is not set, doing this to prevent errors
@@ -50,34 +60,9 @@ const submitBounty = async (req: Request, res: Response) => {
     res.status(404).json({ status: "error", message: "Bounty not found" });
     return;
   }
+  const isBountyStatusValid = await validateBounty(bounty, res);
 
-  if (bounty.status === BountyStatus.Paid) {
-    res
-      .status(400)
-      .json({ status: "error", message: "Bounty is claimed. You are late" });
-    return;
-  }
-  if (bounty.status === BountyStatus.Expired) {
-    res.status(400).json({
-      status: "error",
-      message: "Bounty is expired. No body calimed it",
-    });
-    return;
-  }
-
-  if (bounty.status === BountyStatus.Paused) {
-    res.status(400).json({
-      status: "error",
-      message:
-        "Submissions are paused. You cannot submit answers or cancel your submissions for now. Try again when it's open",
-    });
-    return;
-  }
-  if (bounty.status !== BountyStatus.Open) {
-    res.status(400).json({
-      status: "error",
-      message: "Invalid status, Internal Error",
-    });
+  if (!isBountyStatusValid) {
     return;
   }
 
@@ -90,10 +75,7 @@ const submitBounty = async (req: Request, res: Response) => {
   const bountyAlreadyApplied = await submissionModel.findOne({
     bountyId: bounty._id,
     submission: userId,
-    // "answer.fileName": { $ne: "" },
-    // "answer.path": { $ne: "" },
-    // "answer.mimeType": { $ne: "" },
-    // "answer.size": { $ne: 0 },
+    status: BountySubmissionStatus.Submitted,
   });
 
   if (bountyAlreadyApplied) {
@@ -108,7 +90,7 @@ const submitBounty = async (req: Request, res: Response) => {
   const newBounty = await submissionModel.create({
     bountyId: bounty._id,
     submission: userId,
-    status: BountySubmissionStatus.FirstSubmission,
+    status: BountySubmissionStatus.Submitted,
     // answer,
   });
 
@@ -130,7 +112,9 @@ const submitBounty = async (req: Request, res: Response) => {
 };
 
 const cancelSubmissions = async (req: Request, res: Response) => {
-  const userId = req.user.id;
+  // const userId = req.user.id;
+  const userId = "67cb4187f5d0d9e6fab7589e";
+
   const { bountyId } = req.params;
 
   if (!bountyId) {
@@ -144,46 +128,15 @@ const cancelSubmissions = async (req: Request, res: Response) => {
     return;
   }
 
-  if (bounty.status === BountyStatus.Paid) {
-    res
-      .status(400)
-      .json({ status: "error", message: "Bounty is claimed. You are late" });
-    return;
-  }
-  if (bounty.status === BountyStatus.Expired) {
-    res.status(400).json({
-      status: "error",
-      message: "Bounty is expired. No point of cancelling it",
-    });
-    return;
-  }
-
-  if (bounty.status === BountyStatus.Paused) {
-    res.status(400).json({
-      status: "error",
-      message:
-        "Submissions are paused. You cannot submit answers or cancel your submissions for now. Try again when it's open",
-    });
-    return;
-  }
-  if (bounty.status !== BountyStatus.Open) {
-    res.status(400).json({
-      status: "error",
-      message: "Invalid status, Internal Error",
-    });
+  const isBountyStatusValid = validateBounty(bounty, res);
+  if (!isBountyStatusValid) {
     return;
   }
 
   const submissions = await submissionModel.find({
     bountyId: bounty._id,
     submission: userId,
-    status: {
-      $in: [
-        BountySubmissionStatus.Rejected,
-        BountySubmissionStatus.FirstSubmission,
-        BountySubmissionStatus.Resubmission,
-      ],
-    },
+    status: BountySubmissionStatus.Submitted,
   });
 
   if (submissions.length === 0) {
@@ -191,10 +144,15 @@ const cancelSubmissions = async (req: Request, res: Response) => {
     return;
   }
 
-  await submissionModel.deleteOne({
-    bountyId: bounty._id,
-    submission: userId,
-  });
+  const test = await submissionModel.find({});
+
+  await submissionModel.findOneAndUpdate(
+    {
+      bountyId: bounty._id,
+      submission: userId,
+    },
+    { status: BountySubmissionStatus.Cancelled }
+  );
 
   res.json({ message: "Bounty submission cancelled" });
 };
@@ -214,33 +172,8 @@ const reSubmit = async (req: Request, res: Response) => {
     return;
   }
 
-  if (bounty.status === BountyStatus.Paid) {
-    res
-      .status(400)
-      .json({ status: "error", message: "Bounty is claimed. You are late" });
-    return;
-  }
-  if (bounty.status === BountyStatus.Expired) {
-    res.status(400).json({
-      status: "error",
-      message: "Bounty is expired. No body calimed it",
-    });
-    return;
-  }
-
-  if (bounty.status === BountyStatus.Paused) {
-    res.status(400).json({
-      status: "error",
-      message:
-        "Submissions are paused. You cannot submit answers or cancel your submissions for now. Try again when it's open",
-    });
-    return;
-  }
-  if (bounty.status !== BountyStatus.Open) {
-    res.status(400).json({
-      status: "error",
-      message: "Invalid status, Internal Error",
-    });
+  const isBountyStatusValid = validateBounty(bounty, res);
+  if (!isBountyStatusValid) {
     return;
   }
 
@@ -260,7 +193,7 @@ const reSubmit = async (req: Request, res: Response) => {
   const newBounty = await submissionModel.create({
     bountyId: bounty._id,
     submission: userId,
-    status: BountySubmissionStatus.FirstSubmission,
+    status: BountySubmissionStatus.Submitted,
   });
 
   if (!newBounty) {
@@ -299,55 +232,27 @@ const getBalance = async (req: Request, res: Response) => {
 
 const registerStudent = async (req: Request, res: Response) => {
   const { name, email, username, password, role } = req.body;
-  if (!name.trim()) {
-    res.status(400).json({ status: "error", message: "Name is required" });
-    return;
-  }
-  if (!email.trim()) {
-    res.status(400).json({ status: "error", message: "Email is required" });
-    return;
-  }
-  if (!username.trim()) {
-    res.status(400).json({ status: "error", message: "Username is required" });
-    return;
-  }
-  if (!password.trim()) {
-    res.status(400).json({ status: "error", message: "Password is required" });
-    return;
-  }
-  if (!role.trim() || role !== "student") {
-    res.status(400).json({ status: "error", message: "Invalid role" });
-    return;
-  }
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-  if (!emailRegex.test(email)) {
-    res.status(400).json({ status: "error", message: "Invalid email format" });
+  const areDetailsValid = await validateDetails(
+    name,
+    email,
+    username,
+    password,
+    role,
+    res
+  );
+
+  if (!areDetailsValid) {
     return;
   }
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  if (username.trim().length < 4) {
-    res.status(400).json({
-      status: "error",
-      message: "Username must be at least 4 characters long",
-    });
-    return;
-  }
-
-  if (password.trim().length < 6) {
-    res.status(400).json({
-      status: "error",
-      message: "Password must be at least 6 characters long",
-    });
-    return;
-  }
-
-  const student = await studentModel.create({
+  const student = await RegistrationStudentModel.create({
     name,
     email: normalizedEmail,
     username,
     password,
+    status: RegistrationStatus.Pending,
   });
   if (!student) {
     res
@@ -397,7 +302,35 @@ const loginStudent = async (req: Request, res: Response) => {
     },
   });
 };
+const updatePassword = async (req: Request, res: Response) => {
+  const { newPassword } = req.body;
+
+  if (!newPassword.trim()) {
+    res
+      .status(400)
+      .json({ status: "error", message: "New password is required" });
+    return;
+  }
+
+  const user = await studentModel.findByIdAndUpdate(
+    req.user.id,
+    { password: newPassword },
+    { new: true }
+  );
+
+  if (!user) {
+    res.status(404).json({ status: "error", message: "User not found" });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Password updated successfully",
+    data: { user },
+  });
+};
 export {
+  updatePassword,
   allBounties,
   submitBounty,
   cancelSubmissions,

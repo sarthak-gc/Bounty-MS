@@ -8,7 +8,6 @@ interface studentI {
   //maybe add no of solved bounties, but can be derived from bounties
   // noOfBounties: number
   role: string;
-  isAccepted: boolean;
 }
 
 const studentSchema = new mongoose.Schema<studentI>({
@@ -17,7 +16,6 @@ const studentSchema = new mongoose.Schema<studentI>({
   username: { type: String },
   password: { type: String },
   role: { type: String, default: "student" },
-  isAccepted: { type: Boolean, default: false },
 });
 
 export const studentModel = mongoose.model<studentI>("student", studentSchema);

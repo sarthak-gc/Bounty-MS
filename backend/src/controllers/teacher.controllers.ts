@@ -6,17 +6,36 @@ import {
   BountySubmissionStatus,
   submissionModel,
 } from "../models/submissions.model";
+import {
+  RegistrationStatus,
+  RegistrationTeacherModel,
+} from "../models/registration.model";
+import { studentModel } from "../models/student.model";
+import { addBalance } from "../utils/teacher.utils";
+import { validateDetails } from "../utils/teacher.utils";
+
 const addBounty = async (req: Request, res: Response) => {
-  const { bountyQuestion } = req.body;
+  if (req.user.role !== "teacher") {
+    res.status(403).json({ status: "error", message: "Unauthorized" });
+    return;
+  }
+  const { bountyQuestion, price, timeInMinutes } = req.body;
   if (!bountyQuestion) {
     res.status(400).json({ status: "error", message: "Question is required" });
     return;
   }
-
+  if (!price || price < 10) {
+    res
+      .status(400)
+      .json({ status: "error", message: "Price must be greater than 10 " });
+    return;
+  }
   const newBounty = await bountyModel.create({
     question: bountyQuestion,
     teacherId: req.user.id,
     status: BountyStatus.Open,
+    price,
+    expiryDate: new Date(Date.now() + timeInMinutes * 60 * 1000),
   });
 
   if (!newBounty) {
@@ -50,44 +69,73 @@ const removeBounty = async (req: Request, res: Response) => {
 };
 
 const markBountyAsCompleted = async (req: Request, res: Response) => {
-  const { bountyId, studentId } = req.params;
+  const { bountyId } = req.params;
+
+  const { amount, studentId } = req.body;
   if (!bountyId) {
     res.status(404).json({ status: "error", message: "id is needed" });
     return;
   }
+
+  const bountyAlreadyPaid = await bountyModel.findOne({
+    teacherId: req.user.id,
+    _id: bountyId,
+    status: BountyStatus.Paid,
+  });
+
+  if (bountyAlreadyPaid) {
+    res.status(409).json({ status: "error", message: "Bounty already paid" });
+    return;
+  }
   const bounty = await bountyModel.findOneAndUpdate(
-    { _id: bountyId },
-    { status: BountyStatus.Paid }
+    { _id: bountyId, status: BountyStatus.Open, teacherId: req.user.id },
+    { status: BountyStatus.Paid, studentId },
+    {
+      new: true,
+    }
   );
 
   if (!bounty) {
     res.status(404).json({ status: "error", message: "Bounty not found" });
     return;
   }
-  const updateSubmission = await submissionModel.findOneAndUpdate(
+  const submission = await submissionModel.findOneAndUpdate(
     {
       bountyId,
       submission: studentId,
+      status: { $in: [BountySubmissionStatus.Submitted] },
     },
-    { status: BountySubmissionStatus.Approved },
+    {
+      accepetedBy: req.user.id,
+    },
     { new: true }
   );
 
-  if (!updateSubmission) {
+  if (!submission) {
     res.status(404).json({ status: "error", message: "Student not found" });
     return;
   }
+
+  const balanceAdded = await addBalance(
+    amount,
+    studentId,
+    req.user.id as string
+  );
+
+  if (!balanceAdded) {
+    res.status(500).json({ status: "error", message: "Internal Error" });
+    return;
+  }
+
   res.json({
     status: "success",
-    message: "Bounty marked as completed",
-    data: {
-      receiver: studentId,
-    },
+    message: `Bounty marked as completed and balance sent to ${studentId}`,
   });
 };
 
 const rejectBountyRequest = async (req: Request, res: Response) => {
-  const { bountyId, studentId } = req.params;
+  const { bountyId } = req.params;
+  const { studentId } = req.body;
   if (!bountyId) {
     res.status(404).json({ status: "error", message: "id is needed" });
     return;
@@ -117,7 +165,7 @@ const pauseSubmissions = async (req: Request, res: Response) => {
     return;
   }
   const bounty = await bountyModel.findOneAndUpdate(
-    { _id: bountyId },
+    { _id: bountyId, status: BountyStatus.Open, teacherId: req.user.id },
     { status: BountyStatus.Paused }
   );
 
@@ -168,55 +216,38 @@ const loginTeacher = async (req: Request, res: Response) => {
 
 const registerTeacher = async (req: Request, res: Response) => {
   const { name, email, username, password, role } = req.body;
-  if (!name.trim()) {
-    res.status(400).json({ status: "error", message: "Name is required" });
-    return;
-  }
-  if (!email.trim()) {
-    res.status(400).json({ status: "error", message: "Email is required" });
-    return;
-  }
-  if (!username.trim()) {
-    res.status(400).json({ status: "error", message: "Username is required" });
-    return;
-  }
-  if (!password.trim()) {
-    res.status(400).json({ status: "error", message: "Password is required" });
-    return;
-  }
-  if (!role.trim() || role !== "student") {
-    res.status(400).json({ status: "error", message: "Invalid role" });
-    return;
-  }
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-  if (!emailRegex.test(email)) {
-    res.status(400).json({ status: "error", message: "Invalid email format" });
-    return;
-  }
+  const areDetailsValid = await validateDetails(
+    name,
+    email,
+    username,
+    password,
+    role,
+    res
+  );
 
+  if (!areDetailsValid) {
+    return;
+  }
   const normalizedEmail = email.trim().toLowerCase();
 
-  if (username.trim().length < 4) {
+  const existingUser =
+    (await RegistrationTeacherModel.findOne({
+      email: normalizedEmail,
+    })) || (await teacherModel.findOne({ email }));
+  if (existingUser) {
     res.status(400).json({
       status: "error",
-      message: "Username must be at least 4 characters long",
+      message: "Email already exists. Please use a different email",
     });
     return;
   }
 
-  if (password.trim().length < 6) {
-    res.status(400).json({
-      status: "error",
-      message: "Password must be at least 6 characters long",
-    });
-    return;
-  }
-
-  const teacher = await teacherModel.create({
+  const teacher = await RegistrationTeacherModel.create({
     name,
     email: normalizedEmail,
     username,
     password,
+    status: RegistrationStatus.Pending,
   });
   if (!teacher) {
     res
@@ -233,11 +264,139 @@ const registerTeacher = async (req: Request, res: Response) => {
     },
   });
 };
+
+const currentBounties = async (req: Request, res: Response) => {
+  const bounties = await bountyModel.find({
+    teacherId: req.user.id,
+    status: {
+      $in: [BountyStatus.Open, BountyStatus.Paused],
+    },
+  });
+  if (bounties.length === 0) {
+    res.json({
+      status: "success",
+      message: "Bounties Received",
+      data: { bounties: [] },
+    });
+  }
+  res.json({
+    status: "success",
+    message: "Bounties Received",
+    data: { bounties },
+  });
+  return;
+};
+
+const studentSubmissions = async (req: Request, res: Response) => {
+  const { studentId } = req.params;
+  const submissions = await submissionModel.find({
+    submission: studentId,
+    status: BountySubmissionStatus.Submitted,
+  });
+  res.json({ status: "success", data: submissions });
+};
+
+const viewStudents = async (req: Request, res: Response) => {
+  const students = await studentModel
+    .find({
+      role: "student",
+    })
+    .select("name email username -_id");
+
+  if (students.length === 0) {
+    res.status(404).json({
+      status: "status",
+      message: "No students found",
+      data: { students: [] },
+    });
+    return;
+  }
+  res.json({
+    status: "success",
+    message: "Users Received",
+    data: { students },
+  });
+};
+
+const viewIndividualStudent = async (req: Request, res: Response) => {
+  const { studentId } = req.params;
+  const student = await studentModel
+    .findById(studentId)
+    .select("name email username -_id");
+
+  if (!student) {
+    res.status(404).json({ status: "error", message: "Student not found" });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Student Details Received",
+    data: { student },
+  });
+};
+
+const viewIndividualBounty = async (req: Request, res: Response) => {
+  const { bountyId } = req.params;
+  if (!bountyId) {
+    res.status(404).json({ status: "error", message: "id is needed" });
+    return;
+  }
+  const bounty = await bountyModel.findById(bountyId);
+  if (
+    !bounty ||
+    (bounty.status !== BountyStatus.Open &&
+      bounty.status !== BountyStatus.Paused)
+  ) {
+    res.status(404).json({ status: "error", message: "Bounty not found" });
+    return;
+  }
+  res.json({
+    status: "success",
+    message: "Bounty retrieved successfully",
+    data: { bounty },
+  });
+};
+
+const updatePassword = async (req: Request, res: Response) => {
+  const { newPassword } = req.body;
+
+  if (!newPassword.trim()) {
+    res
+      .status(400)
+      .json({ status: "error", message: "New password is required" });
+    return;
+  }
+
+  const user = await teacherModel.findByIdAndUpdate(
+    req.user.id,
+    { password: newPassword },
+    { new: true }
+  );
+
+  if (!user) {
+    res.status(404).json({ status: "error", message: "User not found" });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Password updated successfully",
+    data: { user },
+  });
+};
 export {
+  updatePassword,
   addBounty,
   removeBounty,
   markBountyAsCompleted,
+  viewIndividualStudent,
+  rejectBountyRequest,
   pauseSubmissions,
   loginTeacher,
   registerTeacher,
+  currentBounties,
+  studentSubmissions,
+  viewStudents,
+  viewIndividualBounty,
 };

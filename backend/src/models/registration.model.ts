@@ -10,17 +10,15 @@ export interface RegistrationStudentI {
   email: string;
   username: string;
   password: string;
-  //maybe add no of solved bounties, but can be derived from bounties
-  // noOfBounties: number
   status: RegistrationStatus;
   role: string;
 }
 
 export interface RegistrationTeacherI {
-  name: string;
-  email: string;
-  username: string;
-  password: string;
+  name: { type: string; required: true };
+  email: { type: string; required: true; unique: true };
+  username: { type: string; required: true; unique: true };
+  password: { type: string; required: true };
   status: RegistrationStatus;
   role: string;
 }
@@ -29,6 +27,7 @@ const RegistrationStudentSchema = new mongoose.Schema<RegistrationStudentI>({
   email: String,
   username: String,
   password: String,
+  status: { type: String, enum: Object.values(RegistrationStatus) },
   role: { type: String, default: "student" },
 });
 
@@ -37,14 +36,15 @@ const RegistrationTeacherSchema = new mongoose.Schema<RegistrationTeacherI>({
   email: String,
   username: String,
   password: String,
+  status: { type: String, enum: Object.values(RegistrationStatus) },
   role: { type: String, default: "teacher" },
 });
 export const RegistrationStudentModel = mongoose.model<RegistrationStudentI>(
-  "studentRegistration",
+  "student-registration",
   RegistrationStudentSchema
 );
 
 export const RegistrationTeacherModel = mongoose.model<RegistrationTeacherI>(
-  "teacherRegistration",
+  "teacher-registration",
   RegistrationTeacherSchema
 );

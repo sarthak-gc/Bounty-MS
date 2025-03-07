@@ -1,43 +1,78 @@
 import mongoose from "mongoose";
 
 export enum BountySubmissionStatus {
-  Resubmission = "Resubmission",
-  FirstSubmission = "FirstSubmission",
+  Submitted = "Submitted",
+  Cancelled = "Cancelled",
   Approved = "Approved",
   Rejected = "Rejected",
 }
+
 interface submissionI {
   bountyId: mongoose.Types.ObjectId;
   submission: mongoose.Types.ObjectId;
+  accepetedBy?: mongoose.Types.ObjectId | string;
+  rejectedBy?: mongoose.Types.ObjectId | string;
   status: BountySubmissionStatus;
-  // answer: {
-  // fileName: String;
-  // path: String;
-  // mimeType: String;
-  // size: Number;
-  // };
 }
 
 const submissionSchema = new mongoose.Schema<submissionI>(
   {
-    bountyId: { type: mongoose.Schema.Types.ObjectId, ref: "bounty" },
-    submission: { type: mongoose.Schema.Types.ObjectId, ref: "student" },
-    status: { type: String, enum: Object.values(BountySubmissionStatus) },
-    // answer: {
-    //   fileName: { type: String },
-    //   path: { type: String },
-    //   mimeType: { type: String },
-    //   size: { type: Number },
-    //   default: {
-    //     fileName: "",
-    //     path: "",
-    //     mimeType: "",
-    //     size: 0,
-    //   },
-    // },
+    bountyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "bounty",
+    },
+    submission: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "student",
+    },
+    accepetedBy: {
+      type: mongoose.Schema.Types.Mixed,
+      validate: {
+        validator: function (value: string | mongoose.Types.ObjectId) {
+          if (value instanceof mongoose.Types.ObjectId) {
+            return true;
+          }
+          return value === "admin";
+        },
+        message: "accepetedBy must be either an ObjectId or 'admin'.",
+      },
+      refPath: "acceptedByRef",
+    },
+    rejectedBy: {
+      type: mongoose.Schema.Types.Mixed,
+      validate: {
+        validator: function (value: string | mongoose.Types.ObjectId) {
+          if (value instanceof mongoose.Types.ObjectId) {
+            return true;
+          }
+          return value === "admin";
+        },
+        message: "rejectedBy must be either an ObjectId or 'admin'.",
+      },
+      refPath: "rejectedByRef",
+    },
+    status: {
+      type: String,
+      enum: Object.values(BountySubmissionStatus),
+      default: BountySubmissionStatus.Submitted,
+    },
   },
   { timestamps: true }
 );
+
+submissionSchema.virtual("acceptedByRef").get(function () {
+  if (this.accepetedBy instanceof mongoose.Types.ObjectId) {
+    return "teacher";
+  }
+  return null;
+});
+
+submissionSchema.virtual("rejectedByRef").get(function () {
+  if (this.rejectedBy instanceof mongoose.Types.ObjectId) {
+    return "teacher";
+  }
+  return null;
+});
 
 export const submissionModel = mongoose.model<submissionI>(
   "submission",
