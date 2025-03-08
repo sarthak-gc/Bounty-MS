@@ -7,12 +7,13 @@ export enum BountySubmissionStatus {
   Rejected = "Rejected",
 }
 
-interface submissionI {
+export interface submissionI {
   bountyId: mongoose.Types.ObjectId;
   submission: mongoose.Types.ObjectId;
   accepetedBy?: mongoose.Types.ObjectId | string;
   rejectedBy?: mongoose.Types.ObjectId | string;
   status: BountySubmissionStatus;
+  answer: string;
 }
 
 const submissionSchema = new mongoose.Schema<submissionI>(
@@ -56,6 +57,7 @@ const submissionSchema = new mongoose.Schema<submissionI>(
       enum: Object.values(BountySubmissionStatus),
       default: BountySubmissionStatus.Submitted,
     },
+    answer: String,
   },
   { timestamps: true }
 );

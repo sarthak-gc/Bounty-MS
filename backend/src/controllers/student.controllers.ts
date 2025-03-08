@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-// import * as jwt from "jsonwebtoken";
 import * as jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -18,11 +17,13 @@ import {
 import { validateBounty, validateDetails } from "../utils/student.utils";
 
 const allBounties = async (req: Request, res: Response) => {
-  const bounties = await bountyModel.find({
-    status: {
-      $in: [BountyStatus.Open, BountyStatus.Paused],
-    },
-  });
+  const bounties = await bountyModel
+    .find({
+      status: {
+        $in: [BountyStatus.Open, BountyStatus.Paused],
+      },
+    })
+    .select("teacherId price status expiryDate");
   if (bounties.length > 0) {
     res.json({
       status: "success",
@@ -43,8 +44,7 @@ const allBounties = async (req: Request, res: Response) => {
 };
 
 const submitBounty = async (req: Request, res: Response) => {
-  // const userId = req.user.id;
-  const userId = "67cb4187f5d0d9e6fab7589e";
+  const userId = req.user.id;
   const { bountyId } = req.params;
 
   //since multer is not set, doing this to prevent errors
@@ -66,12 +66,18 @@ const submitBounty = async (req: Request, res: Response) => {
     return;
   }
 
-  const answer = {
-    fileName: file.originalname,
-    path: file.path,
-    mimeType: file.mimetype,
-    size: file.size,
-  };
+  // const answer = {
+  //   fileName: file.originalname,
+  //   path: file.path,
+  //   mimeType: file.mimetype,
+  //   size: file.size,
+  // };
+  const { answer } = req.body;
+
+  if (!answer) {
+    res.json({ status: "error", message: "Answer is needed" });
+    return;
+  }
   const bountyAlreadyApplied = await submissionModel.findOne({
     bountyId: bounty._id,
     submission: userId,
@@ -91,13 +97,13 @@ const submitBounty = async (req: Request, res: Response) => {
     bountyId: bounty._id,
     submission: userId,
     status: BountySubmissionStatus.Submitted,
-    // answer,
+    answer,
   });
 
   if (!newBounty) {
     res
       .status(500)
-      .json({ status: "error", message: "Failed to create bounty. Try again" });
+      .json({ status: "error", message: "Failed to submit. Try again" });
     return;
   }
 
@@ -112,8 +118,7 @@ const submitBounty = async (req: Request, res: Response) => {
 };
 
 const cancelSubmissions = async (req: Request, res: Response) => {
-  // const userId = req.user.id;
-  const userId = "67cb4187f5d0d9e6fab7589e";
+  const userId = req.user.id;
 
   const { bountyId } = req.params;
 
@@ -159,6 +164,7 @@ const cancelSubmissions = async (req: Request, res: Response) => {
 
 const reSubmit = async (req: Request, res: Response) => {
   const userId = req.user.id;
+
   const { bountyId } = req.params;
 
   if (!bountyId) {
@@ -180,6 +186,7 @@ const reSubmit = async (req: Request, res: Response) => {
   const bountyAlreadyApplied = await submissionModel.findOne({
     bountyId: bounty._id,
     submission: userId,
+    status: BountySubmissionStatus.Submitted,
   });
 
   if (bountyAlreadyApplied) {
@@ -214,7 +221,8 @@ const reSubmit = async (req: Request, res: Response) => {
 };
 
 const getBalance = async (req: Request, res: Response) => {
-  const balance = await balanceModel.findOne({ userId: req.user.id });
+  const userId = req.user.id;
+  const balance = await balanceModel.findOne({ userId });
 
   if (!balance) {
     res.status(404).json({ status: "error", message: "No balance found" });
@@ -247,6 +255,17 @@ const registerStudent = async (req: Request, res: Response) => {
 
   const normalizedEmail = email.trim().toLowerCase();
 
+  const existingUser =
+    (await RegistrationStudentModel.findOne({
+      email: normalizedEmail,
+    })) || (await studentModel.findOne({ email }));
+  if (existingUser) {
+    res.status(400).json({
+      status: "error",
+      message: "Email already exists. Please use a different email",
+    });
+    return;
+  }
   const student = await RegistrationStudentModel.create({
     name,
     email: normalizedEmail,
@@ -329,6 +348,51 @@ const updatePassword = async (req: Request, res: Response) => {
     data: { user },
   });
 };
+
+const getAllSubmissions = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+
+  const submissions = await submissionModel
+    .find({
+      submission: userId,
+    })
+    .select("bountyId status");
+
+  if (submissions.length === 0) {
+    res.status(404).json({ status: "error", message: "No submissions found" });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Submissions",
+    data: { submissions },
+  });
+};
+
+const getSubmissionStatus = async (req: Request, res: Response) => {
+  const submissionId = req.user.id;
+
+  if (!submissionId) {
+    res.status(404).json({ status: "error", message: "id is needed" });
+    return;
+  }
+
+  const submission = await submissionModel
+    .find({ submission: submissionId })
+    .select("bountyId status accepetedBy rejectedBy");
+
+  if (!submission) {
+    res.status(404).json({ status: "error", message: "Submission not found" });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Submission",
+    data: { submission },
+  });
+};
 export {
   updatePassword,
   allBounties,
@@ -338,4 +402,6 @@ export {
   getBalance,
   registerStudent,
   loginStudent,
+  getAllSubmissions,
+  getSubmissionStatus,
 };

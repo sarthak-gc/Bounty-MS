@@ -232,7 +232,6 @@ const getAllRegistrations = async (req: Request, res: Response) => {
   const teachers = await getTeacherRegistrations();
   const students = await getStudentRegistrations();
 
-  console.log(teachers, students);
   if (teachers.length === 0 && students.length === 0) {
     res.status(404).json({
       status: "success",

@@ -30,7 +30,6 @@ export const addBalance = async (
       },
       { new: true }
     );
-    console.log(test, " Money");
     if (!updatedUser) {
       return { status: "error", message: "Failed to update balance" };
     }

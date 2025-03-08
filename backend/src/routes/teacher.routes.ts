@@ -8,6 +8,7 @@ import {
   registerTeacher,
   rejectBountyRequest,
   removeBounty,
+  resumeSubmissions,
   studentSubmissions,
   updatePassword,
   viewIndividualBounty,
@@ -26,6 +27,7 @@ teacherRoutes.delete("/bounty/:bountyId", removeBounty);
 
 teacherRoutes.put("/bounties/accept/:bountyId", markBountyAsCompleted);
 teacherRoutes.put("/bounties/pause/:bountyId", pauseSubmissions);
+teacherRoutes.put("/bounties/resume/:bountyId", resumeSubmissions);
 
 teacherRoutes.get("/students", viewStudents);
 teacherRoutes.get("/bounties", currentBounties);

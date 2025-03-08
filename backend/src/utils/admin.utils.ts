@@ -58,7 +58,6 @@ export const verifyStudent = async (id: string, res: Response) => {
 
 export const deleteStudent = async (userId: string, res: Response) => {
   const user = await studentModel.findOneAndDelete({ _id: userId });
-  console.log("hi hihi");
   if (!user) {
     res.status(404).json({ status: "error", message: "User not found" });
     return;

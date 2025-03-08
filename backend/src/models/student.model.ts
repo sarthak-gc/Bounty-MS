@@ -5,8 +5,6 @@ interface studentI {
   email: string;
   username: string;
   password: string;
-  //maybe add no of solved bounties, but can be derived from bounties
-  // noOfBounties: number
   role: string;
 }
 
