@@ -9,6 +9,8 @@ import Registrations from "./pages/Registrations";
 import Balance from "./pages/Balance";
 import Notification from "./pages/Notification";
 import BountyDetails from "./pages/BountyDetails";
+import TeacherProfile from "./pages/TeacherProfile";
+import StudentProfile from "./pages/StudentProfile";
 
 const App = () => {
   return (
@@ -22,6 +24,8 @@ const App = () => {
         <Route path="/users" element={<Users />} />
         <Route path="/bounties" element={<Bounty />} />
         <Route path="/bounties/:bountyId" element={<BountyDetails />} />
+        <Route path="/teacher/:teacherId" element={<TeacherProfile />} />
+        <Route path="/student/:studentId" element={<StudentProfile />} />
         <Route path="/registrations" element={<Registrations />} />
         <Route path="/teacher-balance" element={<Balance />} />
         <Route path="/sendNotification" element={<Notification />} />

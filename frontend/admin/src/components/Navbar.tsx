@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,8 +10,10 @@ const Navbar = () => {
 
   return (
     <nav className="bg-black text-white shadow-md ">
-      <div className="w-screen-xl mx-auto px-20 py-4 flex justify-between items-center">
-        <div className="text-xl font-semibold">Admin Panel</div>
+      <div className="w-screen-xl mx-auto px-10 lg:px-20 py-4 flex justify-between items-center">
+        <Link to="/users" className="text-xl font-semibold">
+          Admin Panel
+        </Link>
 
         <div className="lg:hidden">
           <button
@@ -59,7 +61,7 @@ const Navbar = () => {
       </div>
 
       <div className={`lg:hidden ${isOpen ? "block" : "hidden"}`}>
-        <div className="space-y-4 px-6 py-4 bg-gray-500 flex flex-col gap-5 absolute right-0 w-1/3">
+        <div className="space-y-4 px-6 py-4 bg-gray-500 flex flex-col gap-5 absolute right-0 w-1/3 z-30">
           {[
             "Users",
             "Bounties",

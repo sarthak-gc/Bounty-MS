@@ -13,7 +13,7 @@ const UserSideBar: React.FC<UserSideBarProps> = ({ setSelectedRole }) => {
   };
 
   return (
-    <div className="lg:block lg:w-64 h-20 flex items-center justify-center bg-gray-900 text-white p-5 space-y-4 lg:h-screen border-r border-r-gray-400">
+    <div className="lg:block lg:w-64 h-20 flex items-center justify-center bg-gray-900 text-white p-5 space-y-4 lg:h-screen lg:border-r border-r-gray-400">
       <div className="lg:space-y-4 flex lg:block w-full  items-center justify-center gap-4">
         <div
           className={`cursor-pointer ${

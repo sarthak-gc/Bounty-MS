@@ -23,7 +23,6 @@ const Login = () => {
     e.preventDefault();
     try {
       const response = await login(credentials);
-      console.log(response);
 
       toast.success("Login successful!", {
         position: "top-right",

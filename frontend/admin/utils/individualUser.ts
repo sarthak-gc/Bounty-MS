@@ -3,9 +3,8 @@ const AXIOS_URL = "http://localhost:3000/admin";
 
 const getUser = async (userId: string, role: string) => {
   try {
-    const response = await axios.get(`${AXIOS_URL}/user/:${userId}`, {
-      data: { role },
-    });
+    const response = await axios.get(`${AXIOS_URL}/user/${role}/${userId}`);
+
     return response;
   } catch (err) {
     if (err instanceof AxiosError) {
