@@ -18,11 +18,16 @@ import {
   verifyStudent,
   verifyTeacher,
 } from "../utils/admin.utils";
+import { submissionModel } from "../models/submissions.model";
+import { model } from "mongoose";
 
 const secret = process.env.JWT_SECRET as string;
 
 const allBounties = async (req: Request, res: Response) => {
-  const bounties = await bountyModel.find({});
+  const bounties = await bountyModel
+    .find({})
+    .populate("teacherId", "name email")
+    .populate("studentId", "name email ");
   if (bounties.length > 0) {
     res.json({
       status: "success",
@@ -275,8 +280,7 @@ const adminLogin = async (req: Request, res: Response) => {
 };
 
 const getUser = async (req: Request, res: Response) => {
-  const { userId } = req.params;
-  const { role } = req.body;
+  const { userId, role } = req.params;
   if (!userId) {
     res.status(404).json({ status: "error", message: "id is needed" });
     return;
@@ -311,9 +315,8 @@ const getUser = async (req: Request, res: Response) => {
 };
 
 const getAllUsers = async (req: Request, res: Response) => {
-  const students = await studentModel.find({});
-  const teachers = await teacherModel.find({});
-
+  const students = await studentModel.find({}).select("-password");
+  const teachers = await teacherModel.find({}).select("-password");
   if (students.length < 0 && teachers.length < 0) {
     res.status(404).json({
       status: "success",
@@ -335,7 +338,24 @@ const viewIndividualBounty = async (req: Request, res: Response) => {
     res.status(404).json({ status: "error", message: "id is needed" });
     return;
   }
-  const bounty = await bountyModel.findById(bountyId);
+  const bounty = await bountyModel
+    .findById(bountyId)
+    .populate({
+      path: "submissions",
+      model: "submission",
+      populate: [
+        {
+          path: "submission",
+          model: "student",
+          select: "name email",
+        },
+      ],
+    })
+    .populate("teacherId", "name email")
+    .exec();
+
+  // .exec();
+
   if (!bounty) {
     res.status(404).json({ status: "error", message: "Bounty not found" });
     return;
@@ -415,6 +435,76 @@ const sendNotifications = async (req: Request, res: Response) => {
     message: "Notification sent successfully",
   });
 };
+const getTeacherBounty = async (req: Request, res: Response) => {
+  const { teacherId } = req.params;
+  if (!teacherId) {
+    res.status(404).json({ status: "error", message: "id is needed" });
+    return;
+  }
+  const bounties = await bountyModel.find({ teacherId });
+
+  if (bounties.length < 0) {
+    res.status(404).json({
+      status: "success",
+      message: "No Bounties Found",
+      data: { bounties: [] },
+    });
+    return;
+  }
+  res.json({
+    status: "success",
+    message: "Bounties retrieved successfully",
+    data: { bounties },
+  });
+};
+
+const getTeacherBalance = async (req: Request, res: Response) => {
+  const { teacherId } = req.params;
+
+  if (!teacherId) {
+    res.status(404).json({ status: "error", message: "id is needed" });
+    return;
+  }
+  const balance = await balanceModel.findOne({
+    userId: teacherId,
+  });
+
+  if (!balance) {
+    res.status(404).json({ status: "error", message: "Balance not found" });
+    return;
+  }
+  res.json({
+    status: "success",
+    message: "Balance retrieved successfully",
+    data: { balance: balance.balance },
+  });
+};
+const getUserSubmissions = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    res.status(404).json({ status: "error", message: "id is needed" });
+    return;
+  }
+  const submissions = await submissionModel
+    .find({ submission: userId })
+    .populate("bountyId", "question price");
+
+  if (submissions.length < 0) {
+    res.status(404).json({
+      status: "success",
+      message: "No Submissions Found",
+      data: { submissions: [] },
+    });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Submissions retrieved successfully",
+    data: { submissions },
+  });
+};
 export {
   allBounties,
   getUser,
@@ -430,4 +520,7 @@ export {
   updatePassword,
   sendNotifications,
   rejectRegistrations,
+  getTeacherBounty,
+  getTeacherBalance,
+  getUserSubmissions,
 };

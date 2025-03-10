@@ -10,7 +10,7 @@ export enum BountySubmissionStatus {
 export interface submissionI {
   bountyId: mongoose.Types.ObjectId;
   submission: mongoose.Types.ObjectId;
-  accepetedBy?: mongoose.Types.ObjectId | string;
+  acceptedBy?: mongoose.Types.ObjectId | string;
   rejectedBy?: mongoose.Types.ObjectId | string;
   status: BountySubmissionStatus;
   answer: string;
@@ -26,7 +26,7 @@ const submissionSchema = new mongoose.Schema<submissionI>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "student",
     },
-    accepetedBy: {
+    acceptedBy: {
       type: mongoose.Schema.Types.Mixed,
       validate: {
         validator: function (value: string | mongoose.Types.ObjectId) {
@@ -63,7 +63,7 @@ const submissionSchema = new mongoose.Schema<submissionI>(
 );
 
 submissionSchema.virtual("acceptedByRef").get(function () {
-  if (this.accepetedBy instanceof mongoose.Types.ObjectId) {
+  if (this.acceptedBy instanceof mongoose.Types.ObjectId) {
     return "teacher";
   }
   return null;

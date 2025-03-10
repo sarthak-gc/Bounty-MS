@@ -13,6 +13,19 @@ import {
 import { studentModel } from "../models/student.model";
 import { addBalance } from "../utils/teacher.utils";
 import { validateDetails } from "../utils/teacher.utils";
+import cron from "node-cron";
+
+cron.schedule("*/10 * * * * * *", async () => {
+  const currentDate = new Date();
+
+  await bountyModel.updateMany(
+    {
+      expiryDate: { $lt: currentDate },
+      status: BountyStatus.Open,
+    },
+    { status: BountyStatus.Expired }
+  );
+});
 
 const addBounty = async (req: Request, res: Response) => {
   if (req.user.role !== "teacher") {
@@ -160,7 +173,7 @@ const rejectBountyRequest = async (req: Request, res: Response) => {
       submission: studentId,
       status: BountySubmissionStatus.Submitted,
     },
-    { status: BountySubmissionStatus.Rejected }
+    { status: BountySubmissionStatus.Rejected, rejectedBy: req.user.id }
   );
 
   if (!updateSubmission) {
