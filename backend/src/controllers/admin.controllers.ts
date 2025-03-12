@@ -505,6 +505,25 @@ const getUserSubmissions = async (req: Request, res: Response) => {
     data: { submissions },
   });
 };
+const getAllBalance = async (req: Request, res: Response) => {
+  const balances = await balanceModel.find().populate("userId", "name price");
+
+  console.log(balances);
+  if (balances.length < 0) {
+    res.status(404).json({
+      status: "success",
+      message: "No Balances Found",
+      data: { balances: [] },
+    });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Balances retrieved successfully",
+    data: { balances },
+  });
+};
 export {
   allBounties,
   getUser,
@@ -523,4 +542,5 @@ export {
   getTeacherBounty,
   getTeacherBalance,
   getUserSubmissions,
+  getAllBalance,
 };

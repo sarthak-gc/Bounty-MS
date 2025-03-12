@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 const AXIOS_URL = "http://localhost:3000/admin";
 
-const rejectRegistration = async (registrationId: string, role: string) => {
+const verifyRegistration = async (registrationId: string, role: string) => {
   try {
     const response = await axios.post(
       `${AXIOS_URL}/registrations/verify/${registrationId}`,
@@ -21,4 +21,4 @@ const rejectRegistration = async (registrationId: string, role: string) => {
     }
   }
 };
-export default rejectRegistration;
+export default verifyRegistration;

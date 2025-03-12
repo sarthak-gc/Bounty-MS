@@ -7,7 +7,7 @@ const updatePassword = async (
   role: string
 ) => {
   try {
-    const response = await axios.put(`${AXIOS_URL}updatePassword/${userId}`, {
+    const response = await axios.put(`${AXIOS_URL}/updatePassword/${userId}`, {
       newPassword,
       role,
     });

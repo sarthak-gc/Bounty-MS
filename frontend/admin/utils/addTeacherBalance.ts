@@ -3,9 +3,12 @@ const AXIOS_URL = "http://localhost:3000/admin";
 
 const addTeacherBalance = async (userId: string, balance: number) => {
   try {
-    const response = await axios.post(`${AXIOS_URL}/balance/${userId}`, {
-      balance,
-    });
+    const response = await axios.post(
+      `${AXIOS_URL}/balance/teacher/${userId}`,
+      {
+        balance,
+      }
+    );
     return response;
   } catch (err) {
     if (err instanceof AxiosError) {

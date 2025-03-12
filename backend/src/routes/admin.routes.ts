@@ -17,6 +17,7 @@ import {
   getTeacherBounty,
   getTeacherBalance,
   getUserSubmissions,
+  getAllBalance,
 } from "../controllers/admin.controllers";
 const adminRoutes = express.Router();
 
@@ -29,6 +30,7 @@ adminRoutes.get("/bounties", allBounties);
 
 adminRoutes.post("/balance/teacher/:teacherId", addTeacherBalance);
 adminRoutes.get("/balance/:teacherId", getTeacherBalance);
+adminRoutes.get("/balance", getAllBalance);
 
 adminRoutes.delete("/users/:role/:userId", deleteUsers);
 adminRoutes.delete("/bounties/:bountyId", removeBounty);

@@ -19,6 +19,7 @@ const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -43,11 +44,15 @@ const Users = () => {
 
   useEffect(() => {
     setFilteredUsers(
-      users.filter(
-        (user) => selectedRole === "all" || user.role === selectedRole
-      )
+      users
+        .filter((user) => selectedRole === "all" || user.role === selectedRole)
+        .filter(
+          (user) =>
+            user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        )
     );
-  }, [users, selectedRole]);
+  }, [users, selectedRole, searchQuery]);
 
   const handleDelete = (id: string) => {
     setUserToDelete(id);
@@ -68,12 +73,16 @@ const Users = () => {
     setUserToDelete(null);
     setIsModalOpen(false);
   };
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
   return (
     <div className="flex flex-col lg:flex-row bg-gray-800">
       <UserSideBar setSelectedRole={setSelectedRole} />
       <div className="flex-1 p-8">
         <div className="relative w-full flex justify-end ">
           <input
+            onChange={handleSearchChange}
             type="search"
             placeholder="Search User..."
             className="w-full lg:w-1/4 border-2 border-yellow-300 rounded-lg px-4 py-3 text-yellow-300 bg-gray-800 outline-none  placeholder:text-gray-400"

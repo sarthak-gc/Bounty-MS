@@ -17,7 +17,7 @@ const Confirmation: React.FC<ConfirmationI> = ({
 
   return (
     <div className="fixed w-full h-full inset-0 flex items-center justify-center bg-opacity-10">
-      <div className="text-yellow-400 p-6 rounded-lg shadow-lg w-80 bg-gray-800">
+      <div className="text-yellow-400 p-6 rounded-lg shadow-lg w-80 bg-gray-900">
         <h3 className="text-lg  font-semibold mb-4">{message}</h3>
         <div className="flex justify-end gap-4">
           <button
