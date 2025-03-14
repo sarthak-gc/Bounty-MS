@@ -45,8 +45,9 @@ const Navbar = () => {
             "Balances",
             "Notify",
             "Settings",
-          ].map((text) => (
+          ].map((text, index) => (
             <NavLink
+              key={index}
               to={`/${text.toLowerCase()}`}
               className={({ isActive }) =>
                 `text-white px-4 py-2 rounded-md ${

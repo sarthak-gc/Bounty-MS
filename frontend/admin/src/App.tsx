@@ -1,6 +1,6 @@
-import { Routes, Route } from "react-router-dom";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
 import Navbar from "./components/Navbar";
 import Setting from "./pages/Setting";
 import Users from "./pages/Users";
@@ -11,6 +11,14 @@ import Notification from "./pages/Notification";
 import BountyDetails from "./pages/BountyDetails";
 import TeacherProfile from "./pages/TeacherProfile";
 import StudentProfile from "./pages/StudentProfile";
+import UpdatePassword from "./pages/UpdatePassword";
+import isAuthenticated from "../utils/isAuthenticated";
+interface PrivateRouteI {
+  children: React.ReactNode;
+}
+const PrivateRoute: React.FC<PrivateRouteI> = ({ children }) => {
+  return isAuthenticated() ? children : <Navigate to="/login" />;
+};
 
 const App = () => {
   return (
@@ -18,18 +26,95 @@ const App = () => {
       {location.pathname !== "/login" && <Navbar />}
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/admin-dashboard" element={<Dashboard />} />
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/settings" element={<Setting />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/bounties" element={<Bounty />} />
-        <Route path="/bounties/:bountyId" element={<BountyDetails />} />
-        <Route path="/teacher/:teacherId" element={<TeacherProfile />} />
-        <Route path="/student/:studentId" element={<StudentProfile />} />
-        <Route path="/registrations" element={<Registrations />} />
-        <Route path="/balances" element={<Balance />} />
-        <Route path="/notify" element={<Notification />} />
-        <Route path="*" element={<h1>Page not found</h1>} />
+
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <Setting />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/update-user-password"
+          element={
+            <PrivateRoute>
+              <UpdatePassword />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <PrivateRoute>
+              <Users />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/bounties"
+          element={
+            <PrivateRoute>
+              <Bounty />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/bounties/:bountyId"
+          element={
+            <PrivateRoute>
+              <BountyDetails />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/teacher/:teacherId"
+          element={
+            <PrivateRoute>
+              <TeacherProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/student/:studentId"
+          element={
+            <PrivateRoute>
+              <StudentProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/registrations"
+          element={
+            <PrivateRoute>
+              <Registrations />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/balances"
+          element={
+            <PrivateRoute>
+              <Balance />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/notify"
+          element={
+            <PrivateRoute>
+              <Notification />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <PrivateRoute>
+              <div>Page Not found</div>
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </>
   );

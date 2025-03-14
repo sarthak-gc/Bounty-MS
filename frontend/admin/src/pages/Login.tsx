@@ -37,7 +37,7 @@ const Login = () => {
       const expireTime = new Date();
       expireTime.setTime(expireTime.getTime() + 24 * 60 * 60 * 1000);
       document.cookie = `token=${token}; expires=${expireTime.toUTCString()}; path=/; secure; SameSite=Lax`;
-      navigate("/admin-dashboard");
+      navigate("/users");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred during login.";
