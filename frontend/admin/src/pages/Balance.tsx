@@ -50,11 +50,8 @@ const Balance = () => {
       const response = await addTeacherBalance(teacherId, addBalance);
       if (response.status === 200) {
         setTeachers((prev) => {
-          console.log(prev, "previous");
-
           return prev.map((teacher) => {
             if (teacher.userId._id === teacherId) {
-              console.log(teacher.balance, addBalance);
               return {
                 ...teacher,
                 balance: teacher.balance + addBalance,

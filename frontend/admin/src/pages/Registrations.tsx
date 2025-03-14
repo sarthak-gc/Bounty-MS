@@ -17,12 +17,11 @@ const Registrations = () => {
 
   const handleReject = async (userId: string, role: string) => {
     try {
-      const response = await rejectRegistration(userId, role);
-      const data = response.data.data;
+      await rejectRegistration(userId, role);
+
       setRegistrations((prev) =>
         prev.filter((registration) => registration._id !== userId)
       );
-      console.log(data);
     } catch (err) {
       console.error(err);
     }
@@ -30,9 +29,7 @@ const Registrations = () => {
 
   const handleVerify = async (userId: string, role: string) => {
     try {
-      const response = await verifyRegistration(userId, role);
-      const data = response.data.data;
-      console.log(data);
+      await verifyRegistration(userId, role);
       setRegistrations((prev) =>
         prev.filter((registration) => registration._id !== userId)
       );

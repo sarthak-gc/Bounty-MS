@@ -83,12 +83,7 @@ const UpdatePassword = () => {
           return;
         }
 
-        const response = await updatePassword(
-          userToResetPassword,
-          newPassword,
-          user.role
-        );
-        console.log(response);
+        await updatePassword(userToResetPassword, newPassword, user.role);
         toast.success("Password reset successfully!");
         setNewPassword("");
         setConfirmPassword("");

@@ -508,7 +508,6 @@ const getUserSubmissions = async (req: Request, res: Response) => {
 const getAllBalance = async (req: Request, res: Response) => {
   const balances = await balanceModel.find().populate("userId", "name price");
 
-  console.log(balances);
   if (balances.length < 0) {
     res.status(404).json({
       status: "success",
