@@ -1,15 +1,20 @@
 import axios, { AxiosError } from "axios";
-const AXIOS_URL = "http://localhost:3000/admin";
+const AXIOS_URL = "http://localhost:3000";
 interface credentialsI {
-  username: string;
+  email: string;
   password: string;
+  role: string;
 }
 export const login = async (credentials: credentialsI) => {
   try {
-    const response = await axios.post(`${AXIOS_URL}/login`, {
-      username: credentials.username,
-      password: credentials.password,
-    });
+    const response = await axios.post(
+      `${AXIOS_URL}/${credentials.role}/login`,
+      {
+        email: credentials.email,
+        password: credentials.password,
+        role: credentials.role,
+      }
+    );
     return response;
   } catch (err) {
     if (err instanceof AxiosError) {

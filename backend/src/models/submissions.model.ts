@@ -27,30 +27,12 @@ const submissionSchema = new mongoose.Schema<submissionI>(
       ref: "student",
     },
     acceptedBy: {
-      type: mongoose.Schema.Types.Mixed,
-      validate: {
-        validator: function (value: string | mongoose.Types.ObjectId) {
-          if (value instanceof mongoose.Types.ObjectId) {
-            return true;
-          }
-          return value === "admin";
-        },
-        message: "accepetedBy must be either an ObjectId or 'admin'.",
-      },
-      refPath: "acceptedByRef",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "teacher",
     },
     rejectedBy: {
-      type: mongoose.Schema.Types.Mixed,
-      validate: {
-        validator: function (value: string | mongoose.Types.ObjectId) {
-          if (value instanceof mongoose.Types.ObjectId) {
-            return true;
-          }
-          return value === "admin";
-        },
-        message: "rejectedBy must be either an ObjectId or 'admin'.",
-      },
-      refPath: "rejectedByRef",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "teacher",
     },
     status: {
       type: String,
@@ -61,20 +43,6 @@ const submissionSchema = new mongoose.Schema<submissionI>(
   },
   { timestamps: true }
 );
-
-submissionSchema.virtual("acceptedByRef").get(function () {
-  if (this.acceptedBy instanceof mongoose.Types.ObjectId) {
-    return "teacher";
-  }
-  return null;
-});
-
-submissionSchema.virtual("rejectedByRef").get(function () {
-  if (this.rejectedBy instanceof mongoose.Types.ObjectId) {
-    return "teacher";
-  }
-  return null;
-});
 
 export const submissionModel = mongoose.model<submissionI>(
   "submission",

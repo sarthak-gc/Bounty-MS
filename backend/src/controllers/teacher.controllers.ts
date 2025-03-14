@@ -318,6 +318,7 @@ const currentBounties = async (req: Request, res: Response) => {
       message: "Bounties Received",
       data: { bounties: [] },
     });
+    return;
   }
   res.json({
     status: "success",
@@ -452,7 +453,54 @@ const resumeSubmissions = async (req: Request, res: Response) => {
       .json({ status: "error", message: "Bounty is already open" });
     return;
   }
-  res.json({ status: "success", message: "Bounty submissios resumed" });
+  res.json({ status: "success", message: "Bounty submissions resumed" });
+};
+
+const allSubmissions = async (req: Request, res: Response) => {
+  const { bountyId } = req.params;
+
+  let submissions = await submissionModel
+    .find({ bountyId })
+    .populate("submission", "name email");
+
+  if (submissions.some((submission) => submission.acceptedBy)) {
+    submissions = await submissionModel
+      .find({ bountyId })
+      .populate("submission", "name email")
+      .populate("acceptedBy", "name email");
+  }
+
+  if (submissions.some((submission) => submission.rejectedBy)) {
+    submissions = await submissionModel
+      .find({ bountyId })
+      .populate("submission", "name email")
+      .populate("rejectedBy", "name email");
+  }
+
+  res.json({
+    status: "success",
+    message: "Bounty submissions received",
+    data: {
+      submissions,
+    },
+  });
+};
+const individualSubmission = async (req: Request, res: Response) => {
+  const { submissionId } = req.params;
+  const submission = await submissionModel
+    .findById(submissionId)
+    .populate("submission", "name email");
+
+  if (!submission) {
+    res.status(404).json({ status: "error", message: "Submission not found" });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Submission retrieved successfully",
+    data: { submission },
+  });
 };
 export {
   updatePassword,
@@ -469,4 +517,6 @@ export {
   viewStudents,
   viewIndividualBounty,
   resumeSubmissions,
+  allSubmissions,
+  individualSubmission,
 };
