@@ -84,7 +84,9 @@ const removeBounty = async (req: Request, res: Response) => {
 const markBountyAsCompleted = async (req: Request, res: Response) => {
   const { bountyId } = req.params;
 
-  const { amount, studentId } = req.body;
+  // const { amount, studentId } = req.body;
+  const amount = 10;
+  const { studentId } = req.body;
   if (!bountyId) {
     res.status(404).json({ status: "error", message: "id is needed" });
     return;

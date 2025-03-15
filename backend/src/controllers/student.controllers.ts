@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import * as jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -23,7 +23,8 @@ const allBounties = async (req: Request, res: Response) => {
         $in: [BountyStatus.Open, BountyStatus.Paused],
       },
     })
-    .select("teacherId price status expiryDate");
+    .select("teacherId price status expiryDate question")
+    .populate("teacherId", "name");
   if (bounties.length > 0) {
     res.json({
       status: "success",
@@ -114,7 +115,7 @@ const submitBounty = async (req: Request, res: Response) => {
     },
     { new: true }
   );
-  res.json({ message: "Bounty Submitted" });
+  res.json({ status: "success", message: "Bounty Submitted" });
 };
 
 const cancelSubmissions = async (req: Request, res: Response) => {
@@ -149,8 +150,6 @@ const cancelSubmissions = async (req: Request, res: Response) => {
     return;
   }
 
-  const test = await submissionModel.find({});
-
   await submissionModel.findOneAndUpdate(
     {
       bountyId: bounty._id,
@@ -159,7 +158,7 @@ const cancelSubmissions = async (req: Request, res: Response) => {
     { status: BountySubmissionStatus.Cancelled }
   );
 
-  res.json({ message: "Bounty submission cancelled" });
+  res.json({ status: "success", message: "No submissions found" });
 };
 
 const reSubmit = async (req: Request, res: Response) => {
@@ -356,8 +355,8 @@ const getAllSubmissions = async (req: Request, res: Response) => {
     .find({
       submission: userId,
     })
-    .select("bountyId status");
-
+    .select("bountyId status answer ")
+    .populate("bountyId", "question status price");
   if (submissions.length === 0) {
     res.status(404).json({ status: "error", message: "No submissions found" });
     return;
@@ -393,6 +392,53 @@ const getSubmissionStatus = async (req: Request, res: Response) => {
     data: { submission },
   });
 };
+
+const individualBounty = async (req: Request, res: Response) => {
+  const { bountyId } = req.params;
+
+  if (!bountyId) {
+    res.status(404).json({ status: "error", message: "id is needed" });
+    return;
+  }
+
+  const bounty = await bountyModel
+    .findOne({
+      _id: bountyId,
+      status: {
+        $in: [BountyStatus.Open, BountyStatus.Paused],
+      },
+    })
+    .select("question status price expiryDate");
+
+  if (!bounty) {
+    res.status(404).json({ status: "error", message: "Bounty not found" });
+    return;
+  }
+
+  res.json({
+    status: "success",
+    message: "Bounty found",
+    data: {
+      bounty,
+    },
+  });
+};
+
+const individualSubmission = async (req: Request, res: Response) => {
+  const { submissionId } = req.params;
+  const submissionDetails = await submissionModel
+    .findById(submissionId)
+    .populate("bountyId", "question");
+  if (!submissionDetails) {
+    res.status(404).json({ status: "error", message: "Submission not found" });
+    return;
+  }
+  res.json({
+    status: "success",
+    message: "Submission found",
+    data: { submissionDetails },
+  });
+};
 export {
   updatePassword,
   allBounties,
@@ -404,4 +450,6 @@ export {
   loginStudent,
   getAllSubmissions,
   getSubmissionStatus,
+  individualBounty,
+  individualSubmission,
 };

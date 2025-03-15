@@ -69,7 +69,6 @@ const Registrations = () => {
   return (
     <div className="flex flex-col lg:flex-row bg-gray-800">
       <div className="flex-1 p-8">
-        {/* Search Bar */}
         <div className="relative w-full flex justify-end mb-8">
           <input
             type="search"
@@ -96,12 +95,10 @@ const Registrations = () => {
           </span>
         </div>
 
-        {/* Header */}
         <h1 className="text-4xl font-semibold mb-8 text-center text-yellow-400">
           Registrations
         </h1>
 
-        {/* Table */}
         <div className="overflow-x-auto h-screen">
           <table className="min-w-full border border-gray-200 rounded-lg shadow-lg text-yellow-400">
             <thead>

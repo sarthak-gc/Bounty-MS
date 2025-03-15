@@ -13,11 +13,16 @@ import TeacherProfile from "./pages/TeacherProfile";
 import StudentProfile from "./pages/StudentProfile";
 import UpdatePassword from "./pages/UpdatePassword";
 import isAuthenticated from "../utils/isAuthenticated";
-interface PrivateRouteI {
-  children: React.ReactNode;
-}
-const PrivateRoute: React.FC<PrivateRouteI> = ({ children }) => {
-  return isAuthenticated() ? children : <Navigate to="/login" />;
+import PageNotFound from "./pages/PageNotFound";
+
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  return isAuthenticated() ? children : <Navigate to="/login" replace />;
+};
+
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return !isAuthenticated() ? children : <Navigate to="/users" replace />;
 };
 
 const App = () => {
@@ -25,7 +30,14 @@ const App = () => {
     <>
       {location.pathname !== "/login" && <Navbar />}
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
 
         <Route
           path="/settings"
@@ -111,7 +123,7 @@ const App = () => {
           path="*"
           element={
             <PrivateRoute>
-              <div>Page Not found</div>
+              <PageNotFound />
             </PrivateRoute>
           }
         />

@@ -1,14 +1,11 @@
-import Navbar from "../components/Navbar";
-
-const TeacherDashBoard = () => {
+const TeacherDashboard = () => {
   return (
-    <>
-      <Navbar
-        role={"teacher"}
-        elements={["Bounties", "Submissions", "Notifications", "Account"]}
-      />
-    </>
+    <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="text-center p-8  rounded-lg shadow-xl">
+        <h1 className="text-6xl font-bold text-white mb-4">Welcome Teacher</h1>
+      </div>
+    </div>
   );
 };
 
-export default TeacherDashBoard;
+export default TeacherDashboard;
